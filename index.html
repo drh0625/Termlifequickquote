@@ -9,7 +9,7 @@
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      background: #001f5b;
       min-height: 100vh;
       color: #fff;
       padding: 32px 16px 60px;
@@ -185,9 +185,17 @@
     .circles-wrap {
       display: flex;
       flex-wrap: wrap;
-      gap: 36px;
+      gap: 40px 32px;
       justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* Column: circle + arrow + breakdown */
+    .account-col {
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
     }
 
     .account-circle {
@@ -201,12 +209,12 @@
       justify-content: center;
       text-align: center;
       padding: 22px;
-      animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
-      transition: transform 0.25s, box-shadow 0.25s;
+      transition: transform 0.25s;
+      flex-shrink: 0;
     }
 
     .account-circle:hover {
-      transform: scale(1.08) translateY(-5px);
+      transform: scale(1.06) translateY(-4px);
     }
 
     @keyframes popIn {
@@ -248,6 +256,56 @@
       white-space: nowrap;
     }
 
+    /* ── Down arrow ── */
+    .circle-arrow {
+      font-size: 1.6rem;
+      line-height: 1;
+      margin: 6px 0 4px;
+      color: var(--acct-border, rgba(255,255,255,0.4));
+      opacity: 0.85;
+    }
+
+    /* ── Income breakdown panel ── */
+    .income-breakdown {
+      width: 215px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--acct-border, rgba(255,255,255,0.15));
+      border-radius: 14px;
+      padding: 14px 18px;
+    }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+      line-height: 1.75;
+    }
+
+    .breakdown-row .b-lbl {
+      font-size: 0.68rem;
+      color: rgba(255,255,255,0.55);
+      white-space: nowrap;
+    }
+
+    .breakdown-row .b-val {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .breakdown-row.net {
+      border-top: 1px solid rgba(255,255,255,0.15);
+      margin-top: 6px;
+      padding-top: 6px;
+    }
+
+    .breakdown-row.net .b-lbl { color: rgba(255,255,255,0.8); font-weight: 700; }
+    .breakdown-row.net .b-val { font-size: 0.85rem; color: var(--acct-border, #fff); }
+
+    .breakdown-row.deduction .b-val { color: #ff9a9a; }
+
     .empty-state {
       text-align: center;
       color: rgba(255,255,255,0.2);
@@ -284,8 +342,7 @@
         <th class="col-name">Account Name</th>
         <th class="col-money">Starting Value ($)</th>
         <th class="col-money">Ending Value ($)</th>
-        <th class="col-rate">Interest Rate (%)</th>
-        <th class="col-money">Income Generated ($)</th>
+        <th class="col-rate">Interest Rate</th>
         <th class="col-pct">Fed Tax W/H (%)</th>
         <th class="col-pct">State Tax W/H (%)</th>
       </tr>
@@ -299,7 +356,7 @@
     <button class="btn-display" onclick="displayAccounts()">Display Accounts</button>
     <button class="btn-clear" onclick="clearAll()">Clear All</button>
   </div>
-  <p class="hint">Fill in any row to add an account. Account Name is required per row.</p>
+  <p class="hint">Fill in any row to add an account. Account Name is required. Income is calculated automatically.</p>
   <div class="error-banner" id="errBanner"></div>
 </div>
 
@@ -332,7 +389,6 @@
         start: document.getElementById(`start_${i}`).value,
         end:   document.getElementById(`end_${i}`).value,
         rate:  document.getElementById(`rate_${i}`).value,
-        inc:   document.getElementById(`income_${i}`).value,
         fed:   document.getElementById(`fed_${i}`).value,
         state: document.getElementById(`state_${i}`).value,
       });
@@ -373,9 +429,6 @@
         <td class="col-rate">
           <input type="number" id="rate_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.rate||'')}" />
         </td>
-        <td class="col-money">
-          <input type="number" id="income_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.inc||'')}" />
-        </td>
         <td class="col-pct">
           <input type="number" id="fed_${i}" placeholder="0.00" min="0" max="100" step="0.01" value="${escAttr(s.fed||'')}" />
         </td>
@@ -394,14 +447,21 @@
     const start = document.getElementById(`start_${i}`).value;
     const end   = document.getElementById(`end_${i}`).value;
     const rate  = document.getElementById(`rate_${i}`).value;
-    const inc   = document.getElementById(`income_${i}`).value;
     const fed   = document.getElementById(`fed_${i}`).value;
     const state = document.getElementById(`state_${i}`).value;
-    // Row is considered active if at least the name is filled
-    const active = name !== '';
-    // Row is complete if name + all numbers filled
-    const complete = active && [start,end,rate,inc,fed,state].every(v => v !== '');
-    return { name, start, end, rate, inc, fed, state, active, complete };
+    const active   = name !== '';
+    const complete = active && [start,end,rate,fed,state].every(v => v !== '');
+    // Calculated fields
+    const endN      = parseFloat(end)   || 0;
+    const rateN     = parseFloat(rate)  || 0;
+    const fedN      = parseFloat(fed)   || 0;
+    const stateN    = parseFloat(state) || 0;
+    const grossIncome = endN * rateN;
+    const fedAmt      = endN * (fedN   / 100);
+    const stateAmt    = endN * (stateN / 100);
+    const netIncome   = grossIncome - fedAmt - stateAmt;
+    return { name, start, end, rate, fed, state, active, complete,
+             grossIncome, fedAmt, stateAmt, netIncome };
   }
 
   function displayAccounts() {
@@ -442,25 +502,58 @@
     title.style.display = 'block';
 
     rows.forEach((a, idx) => {
-      const div = document.createElement('div');
-      div.className = 'account-circle';
-      div.style.background  = a.color.bg;
-      div.style.boxShadow   = a.color.shadow;
-      div.style.animationDelay = `${idx * 0.07}s`;
+      const col = document.createElement('div');
+      col.className = 'account-col';
+      col.style.animationDelay = `${idx * 0.07}s`;
+      col.style.setProperty('--acct-border', a.color.border);
 
-      div.innerHTML = `
+      // Circle
+      const circle = document.createElement('div');
+      circle.className = 'account-circle';
+      circle.style.background = a.color.bg;
+      circle.style.boxShadow  = a.color.shadow;
+      circle.innerHTML = `
         <div class="circle-name">${escHtml(a.name)}</div>
         <div class="circle-rows">
           <div class="circle-row"><span class="lbl">Start Value</span><span class="val">${fmt(a.start,'$')}</span></div>
           <div class="circle-row"><span class="lbl">End Value</span><span class="val">${fmt(a.end,'$')}</span></div>
-          <div class="circle-row"><span class="lbl">Interest Rate</span><span class="val">${fmt(a.rate)}%</span></div>
-          <div class="circle-row"><span class="lbl">Income</span><span class="val">${fmt(a.inc,'$')}</span></div>
-          <div class="circle-row"><span class="lbl">Fed W/H</span><span class="val">${fmt(a.fed)}%</span></div>
-          <div class="circle-row"><span class="lbl">State W/H</span><span class="val">${fmt(a.state)}%</span></div>
+          <div class="circle-row"><span class="lbl">Interest Rate</span><span class="val">${fmt(a.rate)}</span></div>
+          <div class="circle-row"><span class="lbl">Fed W/H Rate</span><span class="val">${fmt(a.fed)}%</span></div>
+          <div class="circle-row"><span class="lbl">State W/H Rate</span><span class="val">${fmt(a.state)}%</span></div>
         </div>
       `;
 
-      wrap.appendChild(div);
+      // Arrow
+      const arrow = document.createElement('div');
+      arrow.className = 'circle-arrow';
+      arrow.textContent = '↓';
+
+      // Breakdown
+      const bd = document.createElement('div');
+      bd.className = 'income-breakdown';
+      bd.innerHTML = `
+        <div class="breakdown-row">
+          <span class="b-lbl">Gross Income</span>
+          <span class="b-val">${fmt(a.grossIncome,'$')}</span>
+        </div>
+        <div class="breakdown-row deduction">
+          <span class="b-lbl">Federal Tax W/H</span>
+          <span class="b-val">− ${fmt(a.fedAmt,'$')}</span>
+        </div>
+        <div class="breakdown-row deduction">
+          <span class="b-lbl">State Tax W/H</span>
+          <span class="b-val">− ${fmt(a.stateAmt,'$')}</span>
+        </div>
+        <div class="breakdown-row net">
+          <span class="b-lbl">Net Income</span>
+          <span class="b-val">${fmt(a.netIncome,'$')}</span>
+        </div>
+      `;
+
+      col.appendChild(circle);
+      col.appendChild(arrow);
+      col.appendChild(bd);
+      wrap.appendChild(col);
     });
   }
 
