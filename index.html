@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Value Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      color: #fff;
+      padding: 32px 16px 60px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 28px;
+      color: #e0e0ff;
+      text-shadow: none;
+    }
+
+    /* ── Form Card ── */
+    .form-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(14px);
+      border-radius: 18px;
+      padding: 28px 28px 24px;
+      max-width: 1160px;
+      margin: 0 auto 40px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+      overflow-x: auto;
+    }
+
+    .form-card h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #b8b0ff;
+      margin-bottom: 20px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* Table layout */
+    .acct-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 10px;
+      min-width: 820px;
+    }
+
+    .acct-table thead th {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #9090b8;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 0 8px 4px;
+      text-align: left;
+    }
+
+    .acct-table thead th:first-child { padding-left: 0; }
+
+    .row-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.35);
+      padding-right: 6px;
+      white-space: nowrap;
+      vertical-align: middle;
+      width: 28px;
+      text-align: center;
+    }
+
+    .row-color-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    td { vertical-align: middle; padding: 2px 6px; }
+    td:first-child { padding-left: 0; }
+
+    input[type="text"],
+    input[type="number"] {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 9px;
+      color: #fff;
+      font-size: 0.88rem;
+      padding: 9px 11px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="number"]::placeholder { color: rgba(255,255,255,0.25); }
+
+    input:focus {
+      border-color: #8a7fff;
+      box-shadow: none;
+    }
+
+    /* Tint the focused row slightly */
+    tr:focus-within td input {
+      background: rgba(255,255,255,0.11);
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    .col-name   { min-width: 130px; }
+    .col-money  { min-width: 108px; }
+    .col-rate   { min-width: 88px;  }
+    .col-pct    { min-width: 84px;  }
+
+    /* Row accent left border */
+    .acct-row td:nth-child(2) input {
+      border-left: 3px solid var(--row-color, #8a7fff);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 11px 26px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-display {
+      background: linear-gradient(135deg, #7c5cbf, #4e8ced);
+      color: #fff;
+    }
+    .btn-display:hover { opacity: 0.92; }
+
+    .btn-clear {
+      background: rgba(255,255,255,0.08);
+      color: #ccc;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .btn-clear:hover { background: rgba(255,255,255,0.14); }
+
+    .hint {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.28);
+      margin-top: 10px;
+    }
+
+    /* ── Circles Stage ── */
+    #stage { max-width: 1100px; margin: 0 auto; }
+
+    .stage-title {
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #7070a0;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .circles-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 36px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .account-circle {
+      position: relative;
+      width: 215px;
+      height: 215px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 22px;
+      animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+
+    .account-circle:hover {
+      transform: scale(1.08) translateY(-5px);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.45); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .circle-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 7px;
+    }
+
+    .circle-rows { width: 100%; }
+
+    .circle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 4px;
+      line-height: 1.6;
+    }
+
+    .circle-row .lbl {
+      font-size: 0.61rem;
+      color: rgba(255,255,255,0.58);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .circle-row .val {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #fff;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 0.95rem;
+      padding: 40px 0;
+      letter-spacing: 0.04em;
+    }
+
+    .error-banner {
+      background: rgba(220,50,50,0.18);
+      border: 1px solid rgba(220,50,50,0.4);
+      border-radius: 10px;
+      color: #ff9090;
+      font-size: 0.8rem;
+      padding: 10px 14px;
+      margin-top: 12px;
+      display: none;
+    }
+    .error-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<h1>Account Value Tracker</h1>
+
+<!-- ── Input Form ── -->
+<div class="form-card">
+  <h2>Enter Up To 5 Accounts</h2>
+
+  <table class="acct-table" id="acctTable">
+    <thead>
+      <tr>
+        <th></th>
+        <th class="col-name">Account Name</th>
+        <th class="col-money">Starting Value ($)</th>
+        <th class="col-money">Ending Value ($)</th>
+        <th class="col-rate">Interest Rate (%)</th>
+        <th class="col-money">Income Generated ($)</th>
+        <th class="col-pct">Fed Tax W/H (%)</th>
+        <th class="col-pct">State Tax W/H (%)</th>
+      </tr>
+    </thead>
+    <tbody id="acctBody">
+      <!-- rows injected by JS -->
+    </tbody>
+  </table>
+
+  <div class="form-actions">
+    <button class="btn-display" onclick="displayAccounts()">Display Accounts</button>
+    <button class="btn-clear" onclick="clearAll()">Clear All</button>
+  </div>
+  <p class="hint">Fill in any row to add an account. Account Name is required per row.</p>
+  <div class="error-banner" id="errBanner"></div>
+</div>
+
+<!-- ── Circle Display ── -->
+<div id="stage">
+  <p class="stage-title" id="stageTitle" style="display:none">Accounts</p>
+  <div class="circles-wrap" id="circlesWrap">
+    <p class="empty-state" id="emptyMsg">Fill in the form above and click Display Accounts.</p>
+  </div>
+</div>
+
+<script>
+  const MAX = 5;
+
+  const PALETTE = [
+    { bg: 'linear-gradient(145deg,#6a11cb,#2575fc)', border: '#2575fc', shadow: '0 4px 16px rgba(0,0,0,0.4)' },
+    { bg: 'linear-gradient(145deg,#f7971e,#ffd200)', border: '#ffd200', shadow: '0 4px 16px rgba(0,0,0,0.4)' },
+    { bg: 'linear-gradient(145deg,#11998e,#38ef7d)', border: '#38ef7d', shadow: '0 4px 16px rgba(0,0,0,0.4)' },
+    { bg: 'linear-gradient(145deg,#c94b4b,#4b134f)', border: '#c94b4b', shadow: '0 4px 16px rgba(0,0,0,0.4)' },
+    { bg: 'linear-gradient(145deg,#f953c6,#b91d73)', border: '#f953c6', shadow: '0 4px 16px rgba(0,0,0,0.4)' },
+  ];
+
+  const STORAGE_KEY = 'acvt_accounts_v1';
+
+  function saveToStorage() {
+    const data = [];
+    for (let i = 0; i < MAX; i++) {
+      data.push({
+        name:  document.getElementById(`name_${i}`).value,
+        start: document.getElementById(`start_${i}`).value,
+        end:   document.getElementById(`end_${i}`).value,
+        rate:  document.getElementById(`rate_${i}`).value,
+        inc:   document.getElementById(`income_${i}`).value,
+        fed:   document.getElementById(`fed_${i}`).value,
+        state: document.getElementById(`state_${i}`).value,
+      });
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function loadFromStorage() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch { return []; }
+  }
+
+  // Build the 5 input rows
+  function buildRows(saved = []) {
+    const tbody = document.getElementById('acctBody');
+    tbody.innerHTML = '';
+    for (let i = 0; i < MAX; i++) {
+      const c = PALETTE[i];
+      const s = saved[i] || {};
+      const tr = document.createElement('tr');
+      tr.className = 'acct-row';
+      tr.dataset.idx = i;
+      tr.style.setProperty('--row-color', c.border);
+      tr.innerHTML = `
+        <td class="row-label">
+          <span class="row-color-swatch" style="background:${c.border}"></span>${i+1}
+        </td>
+        <td class="col-name">
+          <input type="text" id="name_${i}" placeholder="Account ${i+1}" value="${escAttr(s.name||'')}" />
+        </td>
+        <td class="col-money">
+          <input type="number" id="start_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.start||'')}" />
+        </td>
+        <td class="col-money">
+          <input type="number" id="end_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.end||'')}" />
+        </td>
+        <td class="col-rate">
+          <input type="number" id="rate_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.rate||'')}" />
+        </td>
+        <td class="col-money">
+          <input type="number" id="income_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.inc||'')}" />
+        </td>
+        <td class="col-pct">
+          <input type="number" id="fed_${i}" placeholder="0.00" min="0" max="100" step="0.01" value="${escAttr(s.fed||'')}" />
+        </td>
+        <td class="col-pct">
+          <input type="number" id="state_${i}" placeholder="0.00" min="0" max="100" step="0.01" value="${escAttr(s.state||'')}" />
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+    // Save on any input change
+    tbody.addEventListener('input', saveToStorage);
+  }
+
+  function readRow(i) {
+    const name  = document.getElementById(`name_${i}`).value.trim();
+    const start = document.getElementById(`start_${i}`).value;
+    const end   = document.getElementById(`end_${i}`).value;
+    const rate  = document.getElementById(`rate_${i}`).value;
+    const inc   = document.getElementById(`income_${i}`).value;
+    const fed   = document.getElementById(`fed_${i}`).value;
+    const state = document.getElementById(`state_${i}`).value;
+    // Row is considered active if at least the name is filled
+    const active = name !== '';
+    // Row is complete if name + all numbers filled
+    const complete = active && [start,end,rate,inc,fed,state].every(v => v !== '');
+    return { name, start, end, rate, inc, fed, state, active, complete };
+  }
+
+  function displayAccounts() {
+    const err = document.getElementById('errBanner');
+    err.classList.remove('visible');
+
+    const rows = [];
+    const incomplete = [];
+
+    for (let i = 0; i < MAX; i++) {
+      const r = readRow(i);
+      if (r.active && !r.complete) incomplete.push(i + 1);
+      if (r.complete) rows.push({ ...r, color: PALETTE[i] });
+    }
+
+    if (incomplete.length) {
+      err.textContent = `Row${incomplete.length > 1 ? 's' : ''} ${incomplete.join(', ')}: please fill in all numeric fields or clear the account name.`;
+      err.classList.add('visible');
+      return;
+    }
+
+    renderCircles(rows);
+  }
+
+  function renderCircles(rows) {
+    const wrap  = document.getElementById('circlesWrap');
+    const title = document.getElementById('stageTitle');
+    const empty = document.getElementById('emptyMsg');
+
+    wrap.innerHTML = '';
+
+    if (!rows || rows.length === 0) {
+      wrap.appendChild(empty);
+      title.style.display = 'none';
+      return;
+    }
+
+    title.style.display = 'block';
+
+    rows.forEach((a, idx) => {
+      const div = document.createElement('div');
+      div.className = 'account-circle';
+      div.style.background  = a.color.bg;
+      div.style.boxShadow   = a.color.shadow;
+      div.style.animationDelay = `${idx * 0.07}s`;
+
+      div.innerHTML = `
+        <div class="circle-name">${escHtml(a.name)}</div>
+        <div class="circle-rows">
+          <div class="circle-row"><span class="lbl">Start Value</span><span class="val">${fmt(a.start,'$')}</span></div>
+          <div class="circle-row"><span class="lbl">End Value</span><span class="val">${fmt(a.end,'$')}</span></div>
+          <div class="circle-row"><span class="lbl">Interest Rate</span><span class="val">${fmt(a.rate)}%</span></div>
+          <div class="circle-row"><span class="lbl">Income</span><span class="val">${fmt(a.inc,'$')}</span></div>
+          <div class="circle-row"><span class="lbl">Fed W/H</span><span class="val">${fmt(a.fed)}%</span></div>
+          <div class="circle-row"><span class="lbl">State W/H</span><span class="val">${fmt(a.state)}%</span></div>
+        </div>
+      `;
+
+      wrap.appendChild(div);
+    });
+  }
+
+  function clearAll() {
+    localStorage.removeItem(STORAGE_KEY);
+    buildRows();
+    renderCircles([]);
+    document.getElementById('errBanner').classList.remove('visible');
+    document.getElementById('name_0').focus();
+  }
+
+  function fmt(num, prefix = '') {
+    if (num === '' || num === null || isNaN(num)) return '—';
+    return prefix + Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function escAttr(str) {
+    return String(str).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // Init — restore saved data then auto-display if any complete rows exist
+  const saved = loadFromStorage();
+  buildRows(saved);
+  if (saved.some(r => r && r.name)) displayAccounts();
+</script>
+</body>
+</html>
