@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Account Value Tracker</title>
+  <title>Portfolio Value & Income</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
 
     body {
       font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
-      background: #151B54;
+      background: #f0f2f8;
       min-height: 100vh;
       color: #1c1c2e;
       padding: 32px 16px 60px;
@@ -24,7 +24,7 @@
       font-weight: 700;
       letter-spacing: 0.02em;
       margin-bottom: 28px;
-      color: #e8e8f4;
+      color: #000080;
       text-shadow: none;
     }
 
@@ -338,7 +338,7 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      body { background: #151B54 !important; }
+      body { background: #f0f2f8 !important; }
       .form-card { display: none; }
       .account-circle, .income-breakdown { break-inside: avoid; }
     }
@@ -346,7 +346,7 @@
 </head>
 <body>
 
-<h1>Account Value Tracker</h1>
+<h1>Portfolio Value & Income</h1>
 
 <!-- ── Input Form ── -->
 <div class="form-card">
@@ -359,7 +359,7 @@
         <th class="col-name">Account Name</th>
         <th class="col-money">Starting Value ($)</th>
         <th class="col-money">Ending Value ($)</th>
-        <th class="col-rate">Interest Rate</th>
+        <th class="col-rate">Annual Rate of Return</th>
         <th class="col-pct">Fed Tax W/H (%)</th>
         <th class="col-pct">State Tax W/H (%)</th>
       </tr>
@@ -403,11 +403,11 @@
     for (let i = 0; i < MAX; i++) {
       data.push({
         name:  document.getElementById(`name_${i}`).value,
-        start: document.getElementById(`start_${i}`).value,
-        end:   document.getElementById(`end_${i}`).value,
-        rate:  document.getElementById(`rate_${i}`).value,
-        fed:   document.getElementById(`fed_${i}`).value,
-        state: document.getElementById(`state_${i}`).value,
+        start: document.getElementById(`start_${i}`).value.replace(/[$,]/g, ''),
+        end:   document.getElementById(`end_${i}`).value.replace(/[$,]/g, ''),
+        rate:  document.getElementById(`rate_${i}`).value.replace(/%/g, ''),
+        fed:   document.getElementById(`fed_${i}`).value.replace(/%/g, ''),
+        state: document.getElementById(`state_${i}`).value.replace(/%/g, ''),
       });
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -438,19 +438,19 @@
           <input type="text" id="name_${i}" placeholder="Account ${i+1}" value="${escAttr(s.name||'')}" />
         </td>
         <td class="col-money">
-          <input type="number" id="start_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.start||'')}" />
+          <input type="text" id="start_${i}" placeholder="$0.00" value="${escAttr(s.start||'')}" class="currency-input" />
         </td>
         <td class="col-money">
-          <input type="number" id="end_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.end||'')}" />
+          <input type="text" id="end_${i}" placeholder="$0.00" value="${escAttr(s.end||'')}" class="currency-input" />
         </td>
         <td class="col-rate">
-          <input type="number" id="rate_${i}" placeholder="0.00" min="0" step="0.01" value="${escAttr(s.rate||'')}" />
+          <input type="text" id="rate_${i}" placeholder="0.00%" value="${escAttr(s.rate||'')}" class="percent-input" />
         </td>
         <td class="col-pct">
-          <input type="number" id="fed_${i}" placeholder="0.00" min="0" max="100" step="0.01" value="${escAttr(s.fed||'')}" />
+          <input type="text" id="fed_${i}" placeholder="0.00%" value="${escAttr(s.fed||'')}" class="percent-input" />
         </td>
         <td class="col-pct">
-          <input type="number" id="state_${i}" placeholder="0.00" min="0" max="100" step="0.01" value="${escAttr(s.state||'')}" />
+          <input type="text" id="state_${i}" placeholder="0.00%" value="${escAttr(s.state||'')}" class="percent-input" />
         </td>
       `;
       tbody.appendChild(tr);
@@ -461,11 +461,11 @@
 
   function readRow(i) {
     const name  = document.getElementById(`name_${i}`).value.trim();
-    const start = document.getElementById(`start_${i}`).value;
-    const end   = document.getElementById(`end_${i}`).value;
-    const rate  = document.getElementById(`rate_${i}`).value;
-    const fed   = document.getElementById(`fed_${i}`).value;
-    const state = document.getElementById(`state_${i}`).value;
+    const start = document.getElementById(`start_${i}`).value.replace(/[$,]/g, '');
+    const end   = document.getElementById(`end_${i}`).value.replace(/[$,]/g, '');
+    const rate  = document.getElementById(`rate_${i}`).value.replace(/%/g, '');
+    const fed   = document.getElementById(`fed_${i}`).value.replace(/%/g, '');
+    const state = document.getElementById(`state_${i}`).value.replace(/%/g, '');
     const active   = name !== '';
     const complete = active && [start,end,rate,fed,state].every(v => v !== '');
     // Calculated fields
@@ -473,9 +473,10 @@
     const rateN     = parseFloat(rate)  || 0;
     const fedN      = parseFloat(fed)   || 0;
     const stateN    = parseFloat(state) || 0;
-    const grossIncome = endN * rateN;
-    const fedAmt      = endN * (fedN   / 100);
-    const stateAmt    = endN * (stateN / 100);
+    const rateDecimal = rateN >= 1 ? rateN / 100 : rateN;
+    const grossIncome = endN * rateDecimal;
+    const fedAmt      = grossIncome * (fedN   / 100);
+    const stateAmt    = grossIncome * (stateN / 100);
     const netIncome   = grossIncome - fedAmt - stateAmt;
     return { name, start, end, rate, fed, state, active, complete,
              grossIncome, fedAmt, stateAmt, netIncome };
@@ -534,7 +535,7 @@
         <div class="circle-rows">
           <div class="circle-row"><span class="lbl">Start Value</span><span class="val">${fmt(a.start,'$')}</span></div>
           <div class="circle-row"><span class="lbl">End Value</span><span class="val">${fmt(a.end,'$')}</span></div>
-          <div class="circle-row"><span class="lbl">Interest Rate</span><span class="val">${fmt(a.rate)}</span></div>
+          <div class="circle-row"><span class="lbl">Annual Rate of Return</span><span class="val">${fmt(a.rate)}%</span></div>
           <div class="circle-row"><span class="lbl">Fed W/H Rate</span><span class="val">${fmt(a.fed)}%</span></div>
           <div class="circle-row"><span class="lbl">State W/H Rate</span><span class="val">${fmt(a.state)}%</span></div>
         </div>
@@ -550,7 +551,7 @@
       bd.className = 'income-breakdown';
       bd.innerHTML = `
         <div class="breakdown-row">
-          <span class="b-lbl">Gross Income</span>
+          <span class="b-lbl">Annual Gross Income</span>
           <span class="b-val">${fmt(a.grossIncome,'$')}</span>
         </div>
         <div class="breakdown-row deduction">
@@ -595,9 +596,60 @@
     return String(str).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  function formatPercent(val) {
+    const n = parseFloat(String(val).replace(/%/g, ''));
+    if (isNaN(n)) return val;
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + '%';
+  }
+
+  function attachPercentHandlers() {
+    document.querySelectorAll('.percent-input').forEach(input => {
+      input.addEventListener('blur', () => {
+        if (input.value.trim() !== '') {
+          input.value = formatPercent(input.value);
+        }
+        saveToStorage();
+      });
+      input.addEventListener('focus', () => {
+        input.value = input.value.replace(/%/g, '');
+      });
+    });
+  }
+
+  function formatCurrency(val) {
+    const n = parseFloat(val.replace(/[$,]/g, ''));
+    if (isNaN(n)) return val;
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function attachCurrencyHandlers() {
+    document.querySelectorAll('.currency-input').forEach(input => {
+      // Format on blur
+      input.addEventListener('blur', () => {
+        if (input.value.trim() !== '') {
+          input.value = formatCurrency(input.value);
+        }
+        saveToStorage();
+      });
+      // Strip formatting on focus so user can edit raw number
+      input.addEventListener('focus', () => {
+        input.value = input.value.replace(/[$,]/g, '');
+      });
+    });
+  }
+
   // Init — restore saved data then auto-display if any complete rows exist
   const saved = loadFromStorage();
   buildRows(saved);
+  attachCurrencyHandlers();
+  attachPercentHandlers();
+  // Format any pre-loaded values
+  document.querySelectorAll('.currency-input').forEach(input => {
+    if (input.value.trim() !== '') input.value = formatCurrency(input.value);
+  });
+  document.querySelectorAll('.percent-input').forEach(input => {
+    if (input.value.trim() !== '') input.value = formatPercent(input.value);
+  });
   if (saved.some(r => r && r.name)) displayAccounts();
 </script>
 </body>
