@@ -4,14 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Account Value Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #001f5b;
+      font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+      background: #151B54;
       min-height: 100vh;
-      color: #fff;
+      color: #1c1c2e;
       padding: 32px 16px 60px;
     }
 
@@ -19,29 +22,28 @@
       text-align: center;
       font-size: 1.8rem;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.02em;
       margin-bottom: 28px;
-      color: #e0e0ff;
+      color: #e8e8f4;
       text-shadow: none;
     }
 
     /* ── Form Card ── */
     .form-card {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(14px);
+      background: #4169e1;
+      border: 1px solid #2a4fc4;
       border-radius: 18px;
       padding: 28px 28px 24px;
       max-width: 1160px;
       margin: 0 auto 40px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35);
       overflow-x: auto;
     }
 
     .form-card h2 {
       font-size: 1.05rem;
-      font-weight: 600;
-      color: #b8b0ff;
+      font-weight: 700;
+      color: #3a3a5c;
       margin-bottom: 20px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -56,9 +58,9 @@
     }
 
     .acct-table thead th {
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      color: #9090b8;
+      color: #1e1e3a;
       letter-spacing: 0.07em;
       text-transform: uppercase;
       padding: 0 8px 4px;
@@ -70,7 +72,7 @@
     .row-label {
       font-size: 0.72rem;
       font-weight: 700;
-      color: rgba(255,255,255,0.35);
+      color: #8888a8;
       padding-right: 6px;
       white-space: nowrap;
       vertical-align: middle;
@@ -92,11 +94,13 @@
 
     input[type="text"],
     input[type="number"] {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: #ffffff;
+      border: 1px solid #c8c8d8;
       border-radius: 9px;
-      color: #fff;
+      color: #1c1c2e;
+      font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
       font-size: 0.88rem;
+      font-weight: 500;
       padding: 9px 11px;
       outline: none;
       width: 100%;
@@ -104,16 +108,16 @@
     }
 
     input[type="text"]::placeholder,
-    input[type="number"]::placeholder { color: rgba(255,255,255,0.25); }
+    input[type="number"]::placeholder { color: #b0b0c8; }
 
     input:focus {
-      border-color: #8a7fff;
-      box-shadow: none;
+      border-color: #6a7fff;
+      box-shadow: 0 0 0 3px rgba(106,127,255,0.12);
     }
 
     /* Tint the focused row slightly */
     tr:focus-within td input {
-      background: rgba(255,255,255,0.11);
+      background: #fafaff;
     }
 
     input[type="number"]::-webkit-inner-spin-button,
@@ -127,7 +131,7 @@
 
     /* Row accent left border */
     .acct-row td:nth-child(2) input {
-      border-left: 3px solid var(--row-color, #8a7fff);
+      border-left: 3px solid var(--row-color, #6a7fff);
     }
 
     .form-actions {
@@ -141,6 +145,7 @@
       padding: 11px 26px;
       border: none;
       border-radius: 10px;
+      font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
       font-size: 0.9rem;
       font-weight: 700;
       cursor: pointer;
@@ -151,21 +156,21 @@
     button:active { transform: scale(0.97); }
 
     .btn-display {
-      background: linear-gradient(135deg, #7c5cbf, #4e8ced);
+      background: linear-gradient(135deg, #5c4fbf, #3a7ee8);
       color: #fff;
     }
     .btn-display:hover { opacity: 0.92; }
 
     .btn-clear {
-      background: rgba(255,255,255,0.08);
-      color: #ccc;
-      border: 1px solid rgba(255,255,255,0.15);
+      background: #e4e4ec;
+      color: #3a3a5c;
+      border: 1px solid #c8c8d8;
     }
-    .btn-clear:hover { background: rgba(255,255,255,0.14); }
+    .btn-clear:hover { background: #d8d8e8; }
 
     .hint {
       font-size: 0.75rem;
-      color: rgba(255,255,255,0.28);
+      color: #8888a8;
       margin-top: 10px;
     }
 
@@ -175,8 +180,8 @@
     .stage-title {
       text-align: center;
       font-size: 0.85rem;
-      font-weight: 600;
-      color: #7070a0;
+      font-weight: 700;
+      color: #9090b0;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       margin-bottom: 24px;
@@ -227,7 +232,7 @@
       font-weight: 700;
       letter-spacing: 0.07em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.75);
+      color: rgba(255,255,255,0.9);
       margin-bottom: 7px;
     }
 
@@ -243,7 +248,7 @@
 
     .circle-row .lbl {
       font-size: 0.61rem;
-      color: rgba(255,255,255,0.58);
+      color: rgba(255,255,255,0.65);
       text-align: left;
       white-space: nowrap;
     }
@@ -268,8 +273,8 @@
     /* ── Income breakdown panel ── */
     .income-breakdown {
       width: 215px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid var(--acct-border, rgba(255,255,255,0.15));
+      background: #f2f2f5;
+      border: 1px solid var(--acct-border, #c8c8d8);
       border-radius: 14px;
       padding: 14px 18px;
     }
@@ -284,42 +289,44 @@
 
     .breakdown-row .b-lbl {
       font-size: 0.68rem;
-      color: rgba(255,255,255,0.55);
+      color: #5a5a7c;
       white-space: nowrap;
+      font-weight: 500;
     }
 
     .breakdown-row .b-val {
       font-size: 0.75rem;
       font-weight: 700;
-      color: #fff;
+      color: #1c1c2e;
       white-space: nowrap;
     }
 
     .breakdown-row.net {
-      border-top: 1px solid rgba(255,255,255,0.15);
+      border-top: 1px solid #dcdce8;
       margin-top: 6px;
       padding-top: 6px;
     }
 
-    .breakdown-row.net .b-lbl { color: rgba(255,255,255,0.8); font-weight: 700; }
-    .breakdown-row.net .b-val { font-size: 0.85rem; color: var(--acct-border, #fff); }
+    .breakdown-row.net .b-lbl { color: #3a3a5c; font-weight: 700; }
+    .breakdown-row.net .b-val { font-size: 0.85rem; color: var(--acct-border, #1c1c2e); }
 
-    .breakdown-row.deduction .b-val { color: #ff9a9a; }
+    .breakdown-row.deduction .b-val { color: #cc3333; }
 
     .empty-state {
       text-align: center;
-      color: rgba(255,255,255,0.2);
+      color: #9090b0;
       font-size: 0.95rem;
       padding: 40px 0;
       letter-spacing: 0.04em;
     }
 
     .error-banner {
-      background: rgba(220,50,50,0.18);
-      border: 1px solid rgba(220,50,50,0.4);
+      background: rgba(200,40,40,0.08);
+      border: 1px solid rgba(200,40,40,0.3);
       border-radius: 10px;
-      color: #ff9090;
+      color: #b82222;
       font-size: 0.8rem;
+      font-weight: 600;
       padding: 10px 14px;
       margin-top: 12px;
       display: none;
