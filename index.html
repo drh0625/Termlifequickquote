@@ -332,6 +332,16 @@
       display: none;
     }
     .error-banner.visible { display: block; }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body { background: #151B54 !important; }
+      .form-card { display: none; }
+      .account-circle, .income-breakdown { break-inside: avoid; }
+    }
   </style>
 </head>
 <body>
